@@ -1,7 +1,4 @@
-import { useCallback } from "react"
-
-import { useStorage } from "@plasmohq/storage/hook"
-
+import { useCallback, useEffect, useState } from "react"
 import type { Theme } from "./useTheme"
 
 const STORAGE_KEY = "viewerState"
@@ -22,49 +19,80 @@ const getSystemTheme = (): Theme => {
 }
 
 export const useViewerState = () => {
-  // @plasmohq/storage を使って同期を自動化
-  const [state, setState] = useStorage<ViewerState>(STORAGE_KEY, {
+  const [state, setState] = useState<ViewerState>({
     theme: getSystemTheme(),
     keepEnabled: false,
     currentUrl: ""
   })
 
-  // stateがまだロードされていない時のためのフォールバック
-  const currentState = state || {
-    theme: getSystemTheme(),
-    keepEnabled: false,
-    currentUrl: ""
-  }
+  useEffect(() => {
+    if (typeof chrome === "undefined" || !chrome.storage?.sync?.get) return
+
+    chrome.storage.sync.get([STORAGE_KEY], (result) => {
+      const stored = result[STORAGE_KEY]
+      if (stored) {
+        setState((prev) => ({
+          ...prev,
+          theme: stored.theme === "dark" || stored.theme === "light" ? stored.theme : prev.theme,
+          keepEnabled: typeof stored.keepEnabled === "boolean" ? stored.keepEnabled : prev.keepEnabled
+        }))
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (typeof chrome === "undefined" || !chrome.storage?.onChanged) return
+
+    const listener = (
+      changes: Record<string, chrome.storage.StorageChange>,
+      areaName: string
+    ) => {
+      if (areaName === "sync" && changes[STORAGE_KEY]?.newValue) {
+        const stored = changes[STORAGE_KEY].newValue
+        setState((prev) => ({
+          ...prev,
+          theme: stored.theme === "dark" || stored.theme === "light" ? stored.theme : prev.theme,
+          keepEnabled: typeof stored.keepEnabled === "boolean" ? stored.keepEnabled : prev.keepEnabled
+        }))
+      }
+    }
+    chrome.storage.onChanged.addListener(listener)
+    return () => chrome.storage.onChanged.removeListener(listener)
+  }, [])
 
   const toggleTheme = useCallback(() => {
-    setState((current) => ({
-      ...current,
-      theme: current.theme === "dark" ? "light" : "dark"
-    }))
-  }, [setState])
+    setState((current) => {
+      const nextTheme = current.theme === "dark" ? "light" : "dark"
+      if (typeof chrome !== "undefined" && chrome.storage?.sync?.set) {
+        chrome.storage.sync.set({
+          [STORAGE_KEY]: { theme: nextTheme, keepEnabled: current.keepEnabled }
+        })
+      }
+      return { ...current, theme: nextTheme }
+    })
+  }, [])
 
   const toggleKeep = useCallback(() => {
-    setState((current) => ({
-      ...current,
-      keepEnabled: !current.keepEnabled
-    }))
-  }, [setState])
+    setState((current) => {
+      const nextKeep = !current.keepEnabled
+      if (typeof chrome !== "undefined" && chrome.storage?.sync?.set) {
+        chrome.storage.sync.set({
+          [STORAGE_KEY]: { theme: current.theme, keepEnabled: nextKeep }
+        })
+      }
+      return { ...current, keepEnabled: nextKeep }
+    })
+  }, [])
 
-  const setCurrentUrl = useCallback(
-    (currentUrl: string) => {
-      setState((current) => ({
-        ...current,
-        currentUrl
-      }))
-    },
-    [setState]
-  )
+  const setCurrentUrl = useCallback((currentUrl: string) => {
+    setState((current) => ({ ...current, currentUrl }))
+  }, [])
 
   return {
-    currentUrl: currentState.currentUrl,
-    keepEnabled: currentState.keepEnabled,
+    currentUrl: state.currentUrl,
+    keepEnabled: state.keepEnabled,
     setCurrentUrl,
-    theme: currentState.theme,
+    theme: state.theme,
     toggleKeep,
     toggleTheme
   }
