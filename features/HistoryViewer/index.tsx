@@ -18,30 +18,24 @@ const HistoryResults = ({ searchQuery }: { searchQuery: string }) => {
     if (typeof chrome === "undefined" || !url) {
       return
     }
-
     if (event.shiftKey && chrome.windows?.create) {
       await chrome.windows.create({ url, focused: true })
       return
     }
-
     if ((event.ctrlKey || event.metaKey) && chrome.tabs?.create) {
       await chrome.tabs.create({ url, active: false })
       return
     }
-
     if (!chrome.tabs?.query || !chrome.tabs?.update) {
       return
     }
-
     const [activeTab] = await chrome.tabs.query({
       active: true,
       currentWindow: true
     })
-
     if (activeTab?.id === undefined) {
       return
     }
-
     await chrome.tabs.update(activeTab.id, { url })
   }
 
@@ -76,21 +70,18 @@ export const HistoryViewer = () => {
     if (typeof document === "undefined") {
       return
     }
-
     document.body.dataset.surface = isSidePanelPage ? "sidepanel" : "popup"
-
     return () => {
       delete document.body.dataset.surface
     }
   }, [isSidePanelPage])
+
   useEffect(() => {
     if (typeof document === "undefined") {
       return
     }
-
     document.documentElement.dataset.theme = theme
     document.body.dataset.theme = theme
-
     return () => {
       delete document.documentElement.dataset.theme
       delete document.body.dataset.theme
@@ -101,11 +92,9 @@ export const HistoryViewer = () => {
     if (typeof chrome === "undefined" || !chrome.tabs?.query) {
       return
     }
-
     if (keepEnabled) {
       return
     }
-
     const refreshCurrentUrl = () => {
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
         if (tabs[0]?.url) {
@@ -126,7 +115,6 @@ export const HistoryViewer = () => {
       tab: chrome.tabs.Tab
     ) => {
       if (!tab.active) return
-
       chrome.windows.getCurrent((currentWindow) => {
         if (tab.windowId === currentWindow.id) {
           if (changeInfo.url) {
@@ -153,12 +141,10 @@ export const HistoryViewer = () => {
     try {
       if (typeof chrome === "undefined" || !chrome.sidePanel?.setOptions) return
       if (!chrome.tabs?.query) return
-
       const [activeTab] = await chrome.tabs.query({
         active: true,
         currentWindow: true
       })
-
       if (activeTab?.id !== undefined) {
         if (isSidePanelPage) {
           await chrome.sidePanel.setOptions({
@@ -167,13 +153,11 @@ export const HistoryViewer = () => {
           })
           return
         }
-
         await chrome.sidePanel.setOptions({
           tabId: activeTab.id,
           path: sidePanelPath,
           enabled: true
         })
-
         if (activeTab.windowId !== undefined) {
           await chrome.sidePanel.open({ windowId: activeTab.windowId })
         }
@@ -183,36 +167,39 @@ export const HistoryViewer = () => {
     }
   }
 
+  const handleCopyUrl = async () => {
+    const url = displayQuery || currentUrl
+    if (!url) return
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const handleOpenCurrentUrl = async (event: MouseEvent<HTMLButtonElement>) => {
     const url = displayQuery || currentUrl
-
     if (typeof chrome === "undefined" || !url) {
       return
     }
-
     if (event.shiftKey && chrome.windows?.create) {
       await chrome.windows.create({ url, focused: true })
       return
     }
-
     if ((event.ctrlKey || event.metaKey) && chrome.tabs?.create) {
       await chrome.tabs.create({ url, active: false })
       return
     }
-
     if (!chrome.tabs?.query || !chrome.tabs?.update) {
       return
     }
-
     const [activeTab] = await chrome.tabs.query({
       active: true,
       currentWindow: true
     })
-
     if (activeTab?.id === undefined) {
       return
     }
-
     await chrome.tabs.update(activeTab.id, { url })
   }
 
@@ -223,11 +210,11 @@ export const HistoryViewer = () => {
         keepEnabled={keepEnabled}
         theme={theme}
         onOpenCurrentUrl={handleOpenCurrentUrl}
+        onCopyUrl={handleCopyUrl}
         onSidePanelToggle={handleSidePanelToggle}
         onThemeToggle={toggleTheme}
         onKeepToggle={toggleKeep}
       />
-
       <div className={styles.container}>
         {currentUrl ? (
           <>

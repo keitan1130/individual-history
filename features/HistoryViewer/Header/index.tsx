@@ -8,6 +8,8 @@ import keepWhiteIcon from "../../../assets/keep_24dp_FFFFFF_FILL0_wght400_GRAD0_
 import keepOffBlackIcon from "../../../assets/keep_off_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg"
 import keepOffWhiteIcon from "../../../assets/keep_off_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg"
 import lightModeIcon from "../../../assets/light_mode_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg"
+import linkBlackIcon from "../../../assets/link_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg"
+import linkWhiteIcon from "../../../assets/link_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg"
 import openInNewBlackIcon from "../../../assets/open_in_new_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg"
 import openInNewWhiteIcon from "../../../assets/open_in_new_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg"
 import rightPanelCloseBlackIcon from "../../../assets/right_panel_close_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg"
@@ -22,6 +24,7 @@ interface Props {
   keepEnabled: boolean
   theme: Theme
   onOpenCurrentUrl: (event: MouseEvent<HTMLButtonElement>) => void
+  onCopyUrl: () => void
   onSidePanelToggle: () => void
   onThemeToggle: () => void
   onKeepToggle: () => void
@@ -34,6 +37,7 @@ const themeIcons = {
     keep: keepWhiteIcon,
     keepOff: keepOffWhiteIcon,
     github: githubWhiteIcon,
+    link: linkWhiteIcon,
     openInNew: openInNewWhiteIcon,
     panelClose: rightPanelCloseWhiteIcon,
     panelOpen: rightPanelOpenWhiteIcon,
@@ -43,6 +47,7 @@ const themeIcons = {
     keep: keepBlackIcon,
     keepOff: keepOffBlackIcon,
     github: githubBlackIcon,
+    link: linkBlackIcon,
     openInNew: openInNewBlackIcon,
     panelClose: rightPanelCloseBlackIcon,
     panelOpen: rightPanelOpenBlackIcon,
@@ -55,6 +60,7 @@ export const HistoryViewerHeader = ({
   keepEnabled,
   theme,
   onOpenCurrentUrl,
+  onCopyUrl,
   onSidePanelToggle,
   onThemeToggle,
   onKeepToggle
@@ -92,6 +98,13 @@ export const HistoryViewerHeader = ({
             alt=""
             className={styles.buttonIcon}
           />
+        </button>
+        <button
+          className={styles.iconButton}
+          onClick={onCopyUrl}
+          type="button"
+          aria-label="copy searched url">
+          <img src={icons.link} alt="" className={styles.buttonIcon} />
         </button>
         <button
           className={styles.iconButton}

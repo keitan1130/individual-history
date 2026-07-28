@@ -1,33 +1,59 @@
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+# Individual History
 
-## Getting Started
+## 概要
+Individual Historyは、Google Chrome等のブラウザ履歴を素早く検索・閲覧できるブラウザ拡張機能です。サイドパネルやポップアップからシームレスにアクセスでき、直感的なUIでこれまでの履歴を探すことができます。
 
-First, run the development server:
+## 主な機能
+- **履歴検索**: 現在表示しているURLや任意のキーワードに基づき、過去のブラウジング履歴を検索・表示します。
+- **サイドパネル連携**: ブラウザのサイドパネルに表示し、現在のページを見ながら履歴を参照できます（Keep機能）。
+- **テーマ切り替え**: ユーザーの好みに合わせてダークモードとライトモードを切り替えることができます。
+- **無限スクロール**: 過去の履歴を遡ってスムーズに追加読み込みを行います。
 
-```bash
-pnpm dev
-# or
-npm run dev
-```
+## 技術スタック
+- [React](https://reactjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Plasmo](https://docs.plasmo.com/) (ブラウザ拡張機能開発フレームワーク)
+- pnpm
 
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
+## 開発環境の構築方法
 
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
+### 前提条件
+- Node.js (推奨バージョンに準拠)
+- pnpm
 
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
+### インストールと起動
+1. リポジトリをクローンします。
+   ```bash
+   git clone https://github.com/keitan1130/individual-history.git
+   cd individual-history
+   ```
+2. 依存関係をインストールします。
+   ```bash
+   pnpm install
+   ```
+3. 開発用サーバーを起動します。
+   ```bash
+   pnpm dev
+   ```
+4. Chromeブラウザで拡張機能管理画面（`chrome://extensions/`）を開きます。
+5. 右上の「デベロッパーモード」をオンにします。
+6. 「パッケージ化されていない拡張機能を読み込む」をクリックし、プロジェクト内の `build/chrome-mv3-dev` フォルダを選択して読み込みます。
 
-## Making production build
-
-Run the following:
-
+## 本番ビルド
 ```bash
 pnpm build
-# or
-npm run build
 ```
+ビルドが完了すると、`build/chrome-mv3-prod` フォルダが生成されます。ストアへの公開や配布にはこのフォルダを使用します。
 
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
+## ディレクトリ構成
+- `features/`: 主要なUIコンポーネントやビジネスロジック (HistoryViewer 等)
+- `assets/`: 拡張機能で使用するアイコンや画像ファイル
+- `popup.tsx`: ポップアップ起動時のエントリーポイント
+- `sidepanel.tsx`: サイドパネル起動時のエントリーポイント
 
-## Submit to the webstores
+## ライセンス
+[MIT License](LICENSE)
 
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
+このプロジェクトでは、Googleが提供する Material Icons を使用しています。
+Material Icons are licensed under the Apache License 2.0.
+https://www.apache.org/licenses/LICENSE-2.0

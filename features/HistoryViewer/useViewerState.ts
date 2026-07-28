@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+
 import type { Theme } from "./useTheme"
 
 const STORAGE_KEY = "viewerState"
@@ -33,8 +34,14 @@ export const useViewerState = () => {
       if (stored) {
         setState((prev) => ({
           ...prev,
-          theme: stored.theme === "dark" || stored.theme === "light" ? stored.theme : prev.theme,
-          keepEnabled: typeof stored.keepEnabled === "boolean" ? stored.keepEnabled : prev.keepEnabled
+          theme:
+            stored.theme === "dark" || stored.theme === "light"
+              ? stored.theme
+              : prev.theme,
+          keepEnabled:
+            typeof stored.keepEnabled === "boolean"
+              ? stored.keepEnabled
+              : prev.keepEnabled
         }))
       }
     })
@@ -51,8 +58,14 @@ export const useViewerState = () => {
         const stored = changes[STORAGE_KEY].newValue
         setState((prev) => ({
           ...prev,
-          theme: stored.theme === "dark" || stored.theme === "light" ? stored.theme : prev.theme,
-          keepEnabled: typeof stored.keepEnabled === "boolean" ? stored.keepEnabled : prev.keepEnabled
+          theme:
+            stored.theme === "dark" || stored.theme === "light"
+              ? stored.theme
+              : prev.theme,
+          keepEnabled:
+            typeof stored.keepEnabled === "boolean"
+              ? stored.keepEnabled
+              : prev.keepEnabled
         }))
       }
     }
