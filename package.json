@@ -1,8 +1,8 @@
 {
   "name": "individual-history",
   "displayName": "Individual history",
-  "version": "0.0.1",
-  "description": "個別に履歴を表示します",
+  "version": "1.0.0",
+  "description": "現在閲覧中のウェブサイトに関連する過去の90日間のアクセス履歴を、ポップアップやサイドパネルで素早く検索・表示できる拡張機能です。",
   "author": "keitan",
   "scripts": {
     "dev": "plasmo dev",
@@ -34,9 +34,6 @@
     "typescript": "5.3.3"
   },
   "manifest": {
-    "host_permissions": [
-      "https://*/*"
-    ],
     "permissions": [
       "history",
       "storage",
