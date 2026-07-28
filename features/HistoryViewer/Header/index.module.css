@@ -8,12 +8,7 @@
   gap: 8px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--background-third-color);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--background-secondary-color) 92%, transparent),
-    color-mix(in srgb, var(--background-color) 88%, transparent)
-  );
-  backdrop-filter: blur(14px);
+  background: var(--background-color);
 }
 
 .brand {
@@ -31,11 +26,7 @@
 }
 
 .iconButton:hover {
-  background-color: color-mix(
-    in srgb,
-    var(--background-third-color) 42%,
-    transparent
-  );
+  background-color: var(--background-secondary-color);
 }
 
 .iconButton:focus-visible {
