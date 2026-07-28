@@ -1,0 +1,31 @@
+.container {
+  padding: 8px;
+  background-color: var(--background-secondary-color);
+  border-bottom: 1px solid var(--background-third-color);
+}
+
+.breadcrumbsText {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 16px;
+  font-weight: bold;
+  word-break: break-all;
+  line-height: 1.625;
+}
+
+.chunk {
+  cursor: pointer;
+  transition: color 0.2s ease-in-out;
+}
+
+.chunkActive {
+  color: var(--text-color);
+}
+
+.chunkInactive {
+  color: var(--text-secondary-color);
+}
+
+.chunkInactive:hover {
+  color: var(--text-color);
+}
