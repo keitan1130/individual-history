@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import type { HistoryItem } from "~types"
 
-const INITIAL_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
-const MAX_WINDOW_MS = 5 * 365 * 24 * 60 * 60 * 1000
+const INITIAL_WINDOW_MS = 1 * 24 * 60 * 60 * 1000
+const MAX_WINDOW_MS = 100 * 24 * 60 * 60 * 1000
 
 const fetchHistory = (text: string, startTime: number, endTime: number) => {
   if (typeof chrome === "undefined" || !chrome.history?.search) {
@@ -23,6 +23,7 @@ export const useHistory = (searchQuery: string) => {
   const [hasMore, setHasMore] = useState(true)
   const [prevQuery, setPrevQuery] = useState(searchQuery)
   const endTimeRef = useRef<number>(0)
+  const windowMsRef = useRef<number>(INITIAL_WINDOW_MS)
 
   if (searchQuery !== prevQuery) {
     setPrevQuery(searchQuery)
@@ -32,6 +33,7 @@ export const useHistory = (searchQuery: string) => {
 
   useEffect(() => {
     endTimeRef.current = 0
+    windowMsRef.current = INITIAL_WINDOW_MS
   }, [searchQuery])
 
   const loadMore = useCallback(async () => {
@@ -43,20 +45,22 @@ export const useHistory = (searchQuery: string) => {
     }
 
     let currentEndTime = endTimeRef.current
-    let currentWindowMs = INITIAL_WINDOW_MS
+    let currentWindowMs = windowMsRef.current
     let foundItems: HistoryItem[] = []
     let keepFetching = true
 
     const apiSearchText = searchQuery.replace(/^https?:\/\//, "")
     const escapeRegExp = (string: string) =>
       string.replace(/[.+?^${}()|[\]\\]/g, "\\$&")
-    const strictRegex = new RegExp("^" + escapeRegExp(searchQuery))
+    const strictRegex = new RegExp(
+      "^https?:\\/\\/" + escapeRegExp(apiSearchText)
+    )
 
     let attempts = 0
-    const MAX_ATTEMPTS = 10
+    const MAX_ATTEMPTS = 5
     const seenKeys = new Set<string>()
 
-    while (keepFetching && foundItems.length < 20 && attempts < MAX_ATTEMPTS) {
+    while (keepFetching && foundItems.length === 0 && attempts < MAX_ATTEMPTS) {
       const startTime = currentEndTime - currentWindowMs
       attempts++
       const results = await fetchHistory(
@@ -65,30 +69,33 @@ export const useHistory = (searchQuery: string) => {
         currentEndTime
       )
 
-      if (results.length === 0) {
+      const filtered = results.filter((r) => r.url && strictRegex.test(r.url))
+      const mapped = filtered
+        .map((r) => ({
+          id: r.id,
+          url: r.url!,
+          title: r.title || "No Title",
+          lastVisitTime: r.lastVisitTime || 0
+        }))
+        .filter((item) => {
+          const itemKey = `${item.id}-${item.url}-${item.lastVisitTime}`
+          if (seenKeys.has(itemKey)) {
+            return false
+          }
+          seenKeys.add(itemKey)
+          return true
+        })
+
+      if (mapped.length === 0) {
         if (currentWindowMs >= MAX_WINDOW_MS) {
           setHasMore(false)
           keepFetching = false
         } else {
           currentWindowMs = Math.min(currentWindowMs * 2, MAX_WINDOW_MS)
+          windowMsRef.current = currentWindowMs
+          currentEndTime = startTime
         }
       } else {
-        const filtered = results.filter((r) => r.url && strictRegex.test(r.url))
-        const mapped = filtered
-          .map((r) => ({
-            id: r.id,
-            url: r.url!,
-            title: r.title || "No Title",
-            lastVisitTime: r.lastVisitTime || 0
-          }))
-          .filter((item) => {
-            const itemKey = `${item.id}-${item.url}-${item.lastVisitTime}`
-            if (seenKeys.has(itemKey)) {
-              return false
-            }
-            seenKeys.add(itemKey)
-            return true
-          })
         foundItems = [...foundItems, ...mapped]
         currentEndTime = startTime
       }
