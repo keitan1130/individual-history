@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react"
+import type { MouseEvent } from "react"
 
 import type { HistoryItem } from "~types"
 
@@ -9,7 +10,7 @@ interface Props {
   hasMore: boolean
   loading: boolean
   onLoadMore: () => void
-  onOpenItem: (url: string) => void
+  onOpenItem: (url: string, event: MouseEvent<HTMLButtonElement>) => void
 }
 
 const formatDate = (ms: number) => {
@@ -55,7 +56,7 @@ export const HistoryList = ({
             key={itemKey}
             ref={isLast ? lastElementRef : null}
             className={styles.item}
-            onClick={() => onOpenItem(item.url)}
+            onClick={(event) => onOpenItem(item.url, event)}
             type="button">
             <div className={styles.header}>
               <span className={styles.date}>

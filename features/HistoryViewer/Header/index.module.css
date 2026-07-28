@@ -1,0 +1,85 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--background-third-color);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--background-secondary-color) 92%, transparent),
+    color-mix(in srgb, var(--background-color) 88%, transparent)
+  );
+  backdrop-filter: blur(14px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.iconButton:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--background-third-color) 42%,
+    transparent
+  );
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--background-third-color);
+  outline-offset: 2px;
+}
+
+.brandIcon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+.iconButton {
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.buttonIcon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.iconButton:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+@media (max-width: 720px) {
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .controls {
+    justify-content: flex-start;
+  }
+}

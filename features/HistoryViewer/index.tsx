@@ -1,28 +1,48 @@
+import type { MouseEvent } from "react"
 import { useEffect, useState } from "react"
 
+import { HistoryViewerHeader } from "./Header"
 import { HistoryList } from "./HistoryList"
 import styles from "./index.module.css"
 import { UrlBreadcrumbs } from "./UrlBreadcrumbs"
 import { useHistory } from "./useHistory"
-import { useTheme } from "./useTheme"
+import { useViewerState } from "./useViewerState"
 
 const HistoryResults = ({ searchQuery }: { searchQuery: string }) => {
   const { items, hasMore, loading, loadMore } = useHistory(searchQuery)
 
-  const handleOpenItem = (url: string) => {
-    if (typeof chrome === "undefined" || !chrome.tabs?.query || !chrome.tabs?.update) {
+  const handleOpenItem = async (
+    url: string,
+    event: MouseEvent<HTMLButtonElement>
+  ) => {
+    if (typeof chrome === "undefined" || !url) {
       return
     }
 
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const activeTab = tabs[0]
+    if (event.shiftKey && chrome.windows?.create) {
+      await chrome.windows.create({ url, focused: true })
+      return
+    }
 
-      if (activeTab?.id === undefined) {
-        return
-      }
+    if ((event.ctrlKey || event.metaKey) && chrome.tabs?.create) {
+      await chrome.tabs.create({ url, active: false })
+      return
+    }
 
-      chrome.tabs.update(activeTab.id, { url })
+    if (!chrome.tabs?.query || !chrome.tabs?.update) {
+      return
+    }
+
+    const [activeTab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true
     })
+
+    if (activeTab?.id === undefined) {
+      return
+    }
+
+    await chrome.tabs.update(activeTab.id, { url })
   }
 
   return (
@@ -38,15 +58,15 @@ const HistoryResults = ({ searchQuery }: { searchQuery: string }) => {
 
 export const HistoryViewer = () => {
   const sidePanelPath = "sidepanel.html"
-  const [currentUrl, setCurrentUrl] = useState<string>(() => {
-    if (typeof window === "undefined") {
-      return ""
-    }
-
-    return window.location.href
-  })
+  const {
+    currentUrl,
+    keepEnabled,
+    setCurrentUrl,
+    theme,
+    toggleKeep,
+    toggleTheme
+  } = useViewerState()
   const [displayQuery, setDisplayQuery] = useState<string>("")
-  const { theme, toggleTheme } = useTheme()
 
   const isSidePanelPage =
     typeof window !== "undefined" &&
@@ -79,6 +99,10 @@ export const HistoryViewer = () => {
 
   useEffect(() => {
     if (typeof chrome === "undefined" || !chrome.tabs?.query) {
+      return
+    }
+
+    if (keepEnabled) {
       return
     }
 
@@ -118,7 +142,7 @@ export const HistoryViewer = () => {
       chrome.tabs.onActivated.removeListener(handleActivated)
       chrome.tabs.onUpdated.removeListener(handleUpdated)
     }
-  }, [])
+  }, [keepEnabled, setCurrentUrl])
 
   const handleSidePanelToggle = async () => {
     try {
@@ -154,41 +178,50 @@ export const HistoryViewer = () => {
     }
   }
 
-  const handleOpenCurrentUrl = async () => {
+  const handleOpenCurrentUrl = async (event: MouseEvent<HTMLButtonElement>) => {
     const url = displayQuery || currentUrl
 
-    if (
-      typeof chrome === "undefined" ||
-      !chrome.tabs?.create ||
-      !url
-    ) {
+    if (typeof chrome === "undefined" || !url) {
       return
     }
 
-    await chrome.tabs.create({ url, active: true })
+    if (event.shiftKey && chrome.windows?.create) {
+      await chrome.windows.create({ url, focused: true })
+      return
+    }
+
+    if ((event.ctrlKey || event.metaKey) && chrome.tabs?.create) {
+      await chrome.tabs.create({ url, active: false })
+      return
+    }
+
+    if (!chrome.tabs?.query || !chrome.tabs?.update) {
+      return
+    }
+
+    const [activeTab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true
+    })
+
+    if (activeTab?.id === undefined) {
+      return
+    }
+
+    await chrome.tabs.update(activeTab.id, { url })
   }
 
   return (
     <main className={styles.page} data-theme={theme}>
-      <div className={styles.controls}>
-        <div className={styles.buttonGroup}>
-          <button className={styles.button} onClick={toggleTheme} type="button">
-            {theme === "dark" ? "ライト" : "ダーク"}
-          </button>
-          <button
-            className={styles.button}
-            onClick={handleSidePanelToggle}
-            type="button">
-            {isSidePanelPage ? "サイドパネルを閉じる" : "サイドパネルを開く"}
-          </button>
-          <button
-            className={styles.button}
-            onClick={handleOpenCurrentUrl}
-            type="button">
-            検索中のURLを開く
-          </button>
-        </div>
-      </div>
+      <HistoryViewerHeader
+        isSidePanelPage={isSidePanelPage}
+        keepEnabled={keepEnabled}
+        theme={theme}
+        onOpenCurrentUrl={handleOpenCurrentUrl}
+        onSidePanelToggle={handleSidePanelToggle}
+        onThemeToggle={toggleTheme}
+        onKeepToggle={toggleKeep}
+      />
 
       <div className={styles.container}>
         {currentUrl ? (
