@@ -40,11 +40,12 @@ export const HistoryList = ({ items, hasMore, loading, onLoadMore }: Props) => {
     <div className={styles.container}>
       {items.map((item, index) => {
         const isLast = items.length === index + 1
+        const itemKey = `${item.id}-${item.url}-${item.lastVisitTime}`
         const faviconUrl = `https://www.google.com/s2/favicons?sz=16&domain_url=${encodeURIComponent(item.url)}`
 
         return (
           <div
-            key={item.id}
+            key={itemKey}
             ref={isLast ? lastElementRef : null}
             className={styles.item}>
             <div className={styles.header}>

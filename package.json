@@ -39,7 +39,9 @@
     ],
     "permissions": [
       "history",
-      "tabs"
+        "storage",
+        "tabs",
+        "sidePanel"
     ]
   }
 }

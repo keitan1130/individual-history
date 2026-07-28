@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import type { HistoryItem } from "~types"
 
-const SEVEN_DAYS_MS = 1 * 24 * 60 * 60 * 1000
+const INITIAL_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+const MAX_WINDOW_MS = 5 * 365 * 24 * 60 * 60 * 1000
 
 const fetchHistory = (text: string, startTime: number, endTime: number) => {
+  if (typeof chrome === "undefined" || !chrome.history?.search) {
+    return Promise.resolve<chrome.history.HistoryItem[]>([])
+  }
+
   return new Promise<chrome.history.HistoryItem[]>((resolve) => {
     chrome.history.search(
       { text, startTime, endTime, maxResults: 1000 },
@@ -17,25 +22,18 @@ export const useHistory = (searchQuery: string) => {
   const [items, setItems] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
-  const [endTime, setEndTime] = useState<number>(() => Date.now())
-
-  const [prevQuery, setPrevQuery] = useState(searchQuery)
-
-  if (searchQuery !== prevQuery) {
-    setPrevQuery(searchQuery)
-    if (searchQuery) {
-        setItems([])
-        // eslint-disable-next-line react-hooks/purity
-        setEndTime(Date.now())
-        setHasMore(true)
-      }
-  }
+  const endTimeRef = useRef<number>(0)
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore || !searchQuery) return
 
     setLoading(true)
-    let currentEndTime = endTime
+    if (endTimeRef.current === 0) {
+      endTimeRef.current = Date.now()
+    }
+
+    let currentEndTime = endTimeRef.current
+    let currentWindowMs = INITIAL_WINDOW_MS
     let foundItems: HistoryItem[] = []
     let keepFetching = true
 
@@ -45,10 +43,11 @@ export const useHistory = (searchQuery: string) => {
     const strictRegex = new RegExp("^" + escapeRegExp(searchQuery))
 
     let attempts = 0
-    const MAX_ATTEMPTS = 5
+    const MAX_ATTEMPTS = 10
+    const seenKeys = new Set<string>()
 
     while (keepFetching && foundItems.length < 20 && attempts < MAX_ATTEMPTS) {
-      const startTime = currentEndTime - SEVEN_DAYS_MS
+      const startTime = currentEndTime - currentWindowMs
       attempts++
 
       const results = await fetchHistory(
@@ -58,16 +57,31 @@ export const useHistory = (searchQuery: string) => {
       )
 
       if (results.length === 0) {
-        setHasMore(false)
-        keepFetching = false
+        if (currentWindowMs >= MAX_WINDOW_MS) {
+          setHasMore(false)
+          keepFetching = false
+        } else {
+          currentWindowMs = Math.min(currentWindowMs * 2, MAX_WINDOW_MS)
+        }
       } else {
         const filtered = results.filter((r) => r.url && strictRegex.test(r.url))
-        const mapped = filtered.map((r) => ({
-          id: r.id,
-          url: r.url!,
-          title: r.title || "No Title",
-          lastVisitTime: r.lastVisitTime || 0
-        }))
+        const mapped = filtered
+          .map((r) => ({
+            id: r.id,
+            url: r.url!,
+            title: r.title || "No Title",
+            lastVisitTime: r.lastVisitTime || 0
+          }))
+          .filter((item) => {
+            const itemKey = `${item.id}-${item.url}-${item.lastVisitTime}`
+
+            if (seenKeys.has(itemKey)) {
+              return false
+            }
+
+            seenKeys.add(itemKey)
+            return true
+          })
 
         foundItems = [...foundItems, ...mapped]
         currentEndTime = startTime
@@ -77,15 +91,21 @@ export const useHistory = (searchQuery: string) => {
     if (foundItems.length > 0) {
       setItems((prev) => {
         const newItems = foundItems.filter(
-          (m) => !prev.some((p) => p.id === m.id)
+          (m) =>
+            !prev.some(
+              (p) =>
+                p.id === m.id &&
+                p.url === m.url &&
+                p.lastVisitTime === m.lastVisitTime
+            )
         )
         return [...prev, ...newItems]
       })
     }
 
-    setEndTime(currentEndTime)
+    endTimeRef.current = currentEndTime
     setLoading(false)
-  }, [loading, hasMore, endTime, searchQuery])
+  }, [loading, hasMore, searchQuery])
 
   useEffect(() => {
     if (searchQuery && items.length === 0 && hasMore && !loading) {

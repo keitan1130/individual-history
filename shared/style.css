@@ -18,12 +18,18 @@
   --border-color: #000000;
 }
 
+html {
+  width: 100%;
+  height: 100%;
+  background-color: var(--background-color);
+  scrollbar-color: var(--background-third-color) var(--background-color);
+}
+
 main {
-  height: 100vh;
-  width: 100vw;
+  min-height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   background-color: var(--background-color);
   color: var(--text-color);
 }
@@ -31,31 +37,16 @@ main {
 body {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   margin: 0;
+  min-width: 420px;
+  min-height: 600px;
   background-color: var(--background-color);
   color: var(--text-color);
-  width: 1000px;
-  height: 600px;
+  overflow-x: hidden;
+  scrollbar-color: var(--background-third-color) var(--background-color);
 }
 
 #__plasmo {
   width: 100%;
-  height: 100%;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  max-width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--background-secondary-color);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--background-third-color);
+  min-height: 100%;
+  background-color: var(--background-color);
 }

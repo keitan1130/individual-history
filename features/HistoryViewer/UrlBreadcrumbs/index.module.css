@@ -1,7 +1,6 @@
 .container {
   padding: 8px;
   background-color: var(--background-secondary-color);
-  border-bottom: 1px solid var(--background-third-color);
 }
 
 .breadcrumbsText {
