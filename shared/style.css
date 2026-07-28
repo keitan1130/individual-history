@@ -18,6 +18,12 @@
   --border-color: #000000;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   width: 100%;
   height: 100%;
@@ -37,12 +43,20 @@ main {
 body {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   margin: 0;
-  min-width: 420px;
-  min-height: 600px;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
   background-color: var(--background-color);
   color: var(--text-color);
   overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   scrollbar-color: var(--background-third-color) var(--background-color);
+}
+
+body[data-surface="popup"] {
+  min-width: 420px;
+  min-height: 600px;
 }
 
 #__plasmo {

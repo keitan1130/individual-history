@@ -36,6 +36,18 @@ export const HistoryViewer = () => {
     window.location.pathname.includes("sidepanel")
 
   useEffect(() => {
+    if (typeof document === "undefined") {
+      return
+    }
+
+    document.body.dataset.surface = isSidePanelPage ? "sidepanel" : "popup"
+
+    return () => {
+      delete document.body.dataset.surface
+    }
+  }, [isSidePanelPage])
+
+  useEffect(() => {
     if (typeof chrome === "undefined" || !chrome.tabs?.query) {
       return
     }

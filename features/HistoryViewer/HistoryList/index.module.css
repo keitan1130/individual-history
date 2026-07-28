@@ -15,6 +15,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   color: var(--text-color);
   font-size: 14px;
 }
@@ -29,6 +30,8 @@
 }
 
 .title {
+  min-width: 0;
+  flex: 1 1 auto;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
