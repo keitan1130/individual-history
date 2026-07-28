@@ -9,7 +9,6 @@ const fetchHistory = (text: string, startTime: number, endTime: number) => {
   if (typeof chrome === "undefined" || !chrome.history?.search) {
     return Promise.resolve<chrome.history.HistoryItem[]>([])
   }
-
   return new Promise<chrome.history.HistoryItem[]>((resolve) => {
     chrome.history.search(
       { text, startTime, endTime, maxResults: 1000 },
@@ -22,12 +21,23 @@ export const useHistory = (searchQuery: string) => {
   const [items, setItems] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
+  const [prevQuery, setPrevQuery] = useState(searchQuery)
   const endTimeRef = useRef<number>(0)
+
+  if (searchQuery !== prevQuery) {
+    setPrevQuery(searchQuery)
+    setItems([])
+    setHasMore(true)
+  }
+
+  useEffect(() => {
+    endTimeRef.current = 0
+  }, [searchQuery])
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore || !searchQuery) return
-
     setLoading(true)
+
     if (endTimeRef.current === 0) {
       endTimeRef.current = Date.now()
     }
@@ -49,7 +59,6 @@ export const useHistory = (searchQuery: string) => {
     while (keepFetching && foundItems.length < 20 && attempts < MAX_ATTEMPTS) {
       const startTime = currentEndTime - currentWindowMs
       attempts++
-
       const results = await fetchHistory(
         apiSearchText,
         startTime,
@@ -74,15 +83,12 @@ export const useHistory = (searchQuery: string) => {
           }))
           .filter((item) => {
             const itemKey = `${item.id}-${item.url}-${item.lastVisitTime}`
-
             if (seenKeys.has(itemKey)) {
               return false
             }
-
             seenKeys.add(itemKey)
             return true
           })
-
         foundItems = [...foundItems, ...mapped]
         currentEndTime = startTime
       }
@@ -108,11 +114,24 @@ export const useHistory = (searchQuery: string) => {
   }, [loading, hasMore, searchQuery])
 
   useEffect(() => {
-    if (searchQuery && items.length === 0 && hasMore && !loading) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      loadMore()
+    if (!searchQuery) return
+
+    let isMounted = true
+
+    const fetchInitialData = async () => {
+      if (isMounted) {
+        await loadMore()
+      }
     }
-  }, [items, hasMore, loading, loadMore, searchQuery])
+
+    if (items.length === 0 && hasMore && !loading) {
+      fetchInitialData()
+    }
+
+    return () => {
+      isMounted = false
+    }
+  }, [searchQuery, items.length, hasMore, loading, loadMore])
 
   return { items, loading, hasMore, loadMore }
 }

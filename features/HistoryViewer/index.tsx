@@ -125,14 +125,19 @@ export const HistoryViewer = () => {
       changeInfo: chrome.tabs.TabChangeInfo,
       tab: chrome.tabs.Tab
     ) => {
-      if (tab.active && changeInfo.url) {
-        setCurrentUrl(changeInfo.url)
-        return
-      }
+      if (!tab.active) return
 
-      if (tab.active && changeInfo.status === "complete" && tab.url) {
-        setCurrentUrl(tab.url)
-      }
+      chrome.windows.getCurrent((currentWindow) => {
+        if (tab.windowId === currentWindow.id) {
+          if (changeInfo.url) {
+            setCurrentUrl(changeInfo.url)
+            return
+          }
+          if (changeInfo.status === "complete" && tab.url) {
+            setCurrentUrl(tab.url)
+          }
+        }
+      })
     }
 
     chrome.tabs.onActivated.addListener(handleActivated)
