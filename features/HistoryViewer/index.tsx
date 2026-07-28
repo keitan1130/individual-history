@@ -9,12 +9,29 @@ import { useTheme } from "./useTheme"
 const HistoryResults = ({ searchQuery }: { searchQuery: string }) => {
   const { items, hasMore, loading, loadMore } = useHistory(searchQuery)
 
+  const handleOpenItem = (url: string) => {
+    if (typeof chrome === "undefined" || !chrome.tabs?.query || !chrome.tabs?.update) {
+      return
+    }
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs[0]
+
+      if (activeTab?.id === undefined) {
+        return
+      }
+
+      chrome.tabs.update(activeTab.id, { url })
+    })
+  }
+
   return (
     <HistoryList
       items={items}
       hasMore={hasMore}
       loading={loading}
       onLoadMore={loadMore}
+      onOpenItem={handleOpenItem}
     />
   )
 }
@@ -46,6 +63,19 @@ export const HistoryViewer = () => {
       delete document.body.dataset.surface
     }
   }, [isSidePanelPage])
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return
+    }
+
+    document.documentElement.dataset.theme = theme
+    document.body.dataset.theme = theme
+
+    return () => {
+      delete document.documentElement.dataset.theme
+      delete document.body.dataset.theme
+    }
+  }, [theme])
 
   useEffect(() => {
     if (typeof chrome === "undefined" || !chrome.tabs?.query) {
@@ -124,6 +154,20 @@ export const HistoryViewer = () => {
     }
   }
 
+  const handleOpenCurrentUrl = async () => {
+    const url = displayQuery || currentUrl
+
+    if (
+      typeof chrome === "undefined" ||
+      !chrome.tabs?.create ||
+      !url
+    ) {
+      return
+    }
+
+    await chrome.tabs.create({ url, active: true })
+  }
+
   return (
     <main className={styles.page} data-theme={theme}>
       <div className={styles.controls}>
@@ -137,6 +181,12 @@ export const HistoryViewer = () => {
             type="button">
             {isSidePanelPage ? "サイドパネルを閉じる" : "サイドパネルを開く"}
           </button>
+          <button
+            className={styles.button}
+            onClick={handleOpenCurrentUrl}
+            type="button">
+            検索中のURLを開く
+          </button>
         </div>
       </div>
 
@@ -148,7 +198,10 @@ export const HistoryViewer = () => {
               originalUrl={currentUrl}
               onChangeQuery={setDisplayQuery}
             />
-            <HistoryResults key={`${currentUrl}::${displayQuery}`} searchQuery={displayQuery} />
+            <HistoryResults
+              key={`${currentUrl}::${displayQuery}`}
+              searchQuery={displayQuery}
+            />
           </>
         ) : (
           <div className={styles.loading}>Loading URL...</div>
